@@ -3,7 +3,7 @@ import re
 from datetime import datetime, date
 from calendar import monthrange
 from pathlib import Path
-from flask import Flask, request, send_from_directory, abort, jsonify, render_template
+from flask import Flask, request, send_from_directory, send_file, abort, jsonify, render_template
 
 from db import init_db, insert_sale, fetch_sales_between, update_sale, delete_sale
 from report import create_month_report_xlsx
@@ -143,8 +143,10 @@ def api_download_report():
     if year == today.year and month == today.month:
         date_to = today
     rows = fetch_sales_between(date_from.isoformat(), date_to.isoformat())
-    xlsx_path = create_month_report_xlsx(rows, year, month, date_to.isoformat())
-    return send_from_directory(xlsx_path.parent, xlsx_path.name, as_attachment=True)
+    xlsx_data = create_month_report_xlsx(rows, year, month, date_to.isoformat())
+    filename = f"reporte_{year:04d}-{month:02d}_hasta_{date_to.isoformat()}.xlsx"
+    return send_file(xlsx_data, as_attachment=True, download_name=filename,
+                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 @app.put("/api/sales/<int:sale_id>")
 def api_update_sale(sale_id: int):

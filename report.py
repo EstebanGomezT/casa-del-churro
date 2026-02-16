@@ -1,15 +1,16 @@
+from io import BytesIO
 from pathlib import Path
-from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image as XlImage
 from openpyxl.utils import get_column_letter
 
 BASE_DIR = Path(__file__).resolve().parent
 
-IMG_HEIGHT_PX = 120
-ROW_HEIGHT_PT = 95
+IMG_WIDTH_PX = 150
+IMG_HEIGHT_PX = 200
+ROW_HEIGHT_PT = 155
 
-def create_month_report_xlsx(rows: list[dict], year: int, month: int, date_to_inclusive: str) -> Path:
+def create_month_report_xlsx(rows: list[dict], year: int, month: int, date_to_inclusive: str) -> BytesIO:
     wb = Workbook()
     ws = wb.active
     ws.title = "Ventas"
@@ -42,9 +43,16 @@ def create_month_report_xlsx(rows: list[dict], year: int, month: int, date_to_in
         if receipt_file and receipt_file.exists():
             try:
                 img = XlImage(str(receipt_file))
-                img.height = IMG_HEIGHT_PX
-                img.width = int(img.width * (IMG_HEIGHT_PX / img.height)) if img.height else 100
-                cell = f"K{idx + 2}"  # row idx+2 (1-based + header)
+                # Mantener proporcion original
+                orig_w, orig_h = img.width, img.height
+                if orig_w and orig_h:
+                    ratio = min(IMG_WIDTH_PX / orig_w, IMG_HEIGHT_PX / orig_h)
+                    img.width = int(orig_w * ratio)
+                    img.height = int(orig_h * ratio)
+                else:
+                    img.width = IMG_WIDTH_PX
+                    img.height = IMG_HEIGHT_PX
+                cell = f"K{idx + 2}"
                 ws.add_image(img, cell)
                 ws.row_dimensions[idx + 2].height = ROW_HEIGHT_PT
             except Exception:
@@ -56,12 +64,10 @@ def create_month_report_xlsx(rows: list[dict], year: int, month: int, date_to_in
 
     for col in range(1, len(headers) + 1):
         ws.column_dimensions[get_column_letter(col)].width = 16
-    ws.column_dimensions["K"].width = 22  # wider for images
+    ws.column_dimensions["K"].width = 24
 
-    out_dir = BASE_DIR / "storage/reports"
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    filename = f"reporte_{year:04d}-{month:02d}_hasta_{date_to_inclusive}.xlsx"
-    path = out_dir / filename
-    wb.save(path)
-    return path
+    # Generar en memoria, sin guardar archivo en disco
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output
