@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Casa del Churro - Ventas</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    color: #fff;
+    background: #1a0e00;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: url('/static/bg.jpg') center/cover no-repeat;
+    filter: brightness(0.25) blur(3px);
+    z-index: -1;
+  }
+
+  .container { max-width: 460px; margin: 0 auto; padding: 16px 16px 40px; }
+
+  /* Logo */
+  .logo { display: block; margin: 0 auto 8px; max-width: 160px; height: auto; filter: drop-shadow(0 0 20px rgba(255,160,0,0.4)); }
+  .subtitle { text-align: center; font-size: 0.75rem; color: #c89a50; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+  .tab {
+    flex: 1; padding: 10px; text-align: center;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; cursor: pointer; font-size: 0.85rem; color: #c89a50;
+    transition: all 0.25s; backdrop-filter: blur(8px);
+  }
+  .tab.active { background: #d4870e; color: #1a0e00; border-color: #d4870e; font-weight: 700; }
+
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Card */
+  .card {
+    background: rgba(20,12,4,0.85); backdrop-filter: blur(12px);
+    border: 1px solid rgba(200,154,80,0.15); border-radius: 14px;
+    padding: 20px; margin-bottom: 12px;
+  }
+
+  /* Form elements */
+  label { display: block; font-size: 0.75rem; color: #a0845a; margin-bottom: 3px; margin-top: 12px; }
+  .section-label { font-size: 0.7rem; color: #d4870e; margin-top: 16px; margin-bottom: 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+  input, select {
+    width: 100%; padding: 10px 12px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(200,154,80,0.2);
+    border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none;
+    transition: border 0.2s;
+  }
+  input:focus, select:focus { border-color: #d4870e; box-shadow: 0 0 0 2px rgba(212,135,14,0.15); }
+  input::placeholder { color: rgba(255,255,255,0.2); }
+  select option { background: #1a0e00; color: #fff; }
+
+  input[type="file"] { padding: 8px; font-size: 0.85rem; }
+  input[type="file"]::file-selector-button {
+    background: #d4870e; color: #1a0e00; border: none;
+    padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    font-weight: 700; margin-right: 8px; font-size: 0.8rem;
+  }
+
+  .row { display: flex; gap: 8px; }
+  .row > div { flex: 1; }
+
+  /* Buttons */
+  .btn {
+    width: 100%; padding: 12px;
+    background: #d4870e; color: #1a0e00;
+    border: none; border-radius: 10px;
+    font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    margin-top: 18px; transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn:hover { background: #e69a1e; transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-outline { background: transparent; border: 1px solid #d4870e; color: #d4870e; }
+  .btn-outline:hover { background: rgba(212,135,14,0.1); }
+
+  /* Messages */
+  .msg { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; text-align: center; }
+  .msg.ok { background: rgba(34,120,60,0.3); color: #5ddb6e; border: 1px solid rgba(93,219,110,0.2); }
+  .msg.err { background: rgba(140,30,30,0.3); color: #ff7a7a; border: 1px solid rgba(255,122,122,0.2); }
+
+  /* Table */
+  .sales-table { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 0.7rem; }
+  .sales-table th { background: rgba(212,135,14,0.1); padding: 8px 4px; text-align: left; color: #c89a50; border-bottom: 1px solid rgba(200,154,80,0.15); font-weight: 600; }
+  .sales-table td { padding: 7px 4px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .sales-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .total-row td { font-weight: 700; color: #d4870e; border-top: 2px solid rgba(212,135,14,0.3); }
+
+  /* Action buttons in table */
+  .act { cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; border: none; margin-left: 2px; }
+  .act-edit { background: rgba(212,135,14,0.2); color: #d4870e; }
+  .act-del { background: rgba(200,50,50,0.2); color: #ff7a7a; }
+  .act:hover { opacity: 0.7; }
+
+  /* Modal */
+  .modal-bg { display:none; position:fixed; top:0;left:0;right:0;bottom:0; background:rgba(0,0,0,0.7); z-index:100; backdrop-filter:blur(4px); }
+  .modal-bg.open { display:flex; align-items:center; justify-content:center; }
+  .modal { background:#1a0e00; border:1px solid rgba(200,154,80,0.2); border-radius:14px; padding:20px; width:90%; max-width:400px; max-height:85vh; overflow-y:auto; }
+  .modal h3 { color:#d4870e; font-size:1rem; margin-bottom:12px; }
+  .modal .row { margin-top:0; }
+  .btn-sm { padding:8px; font-size:0.85rem; margin-top:10px; }
+  .btn-danger { background:#8b2020; color:#fff; }
+  .btn-danger:hover { background:#a52d2d; }
+  .btn-row { display:flex; gap:8px; }
+  .btn-row .btn { flex:1; }
+
+  /* Misc */
+  .preview { margin-top: 10px; max-width: 100%; max-height: 180px; border-radius: 8px; display: none; border: 1px solid rgba(200,154,80,0.2); }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #1a0e00; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+  .divider { border: none; border-top: 1px solid rgba(200,154,80,0.1); margin: 14px 0 2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <img src="/static/logo.png" alt="La Casa del Churro" class="logo">
+  <div class="subtitle">Control de ventas</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showPanel('register')">Registrar</div>
+    <div class="tab" onclick="showPanel('report')">Reporte</div>
+  </div>
+
+  <!-- REGISTRAR VENTA -->
+  <div id="panel-register" class="panel active">
+    <div class="card">
+      <form id="sale-form">
+        <label>Punto de venta</label>
+        <select id="sale-punto-venta" required>
+          <option value="">-- Seleccionar --</option>
+          <option value="Carro Plaza">Carro Plaza</option>
+          <option value="Carro Amarillo">Carro Amarillo</option>
+          <option value="Carro Chico">Carro Chico</option>
+          <option value="Carro Tren">Carro Tren</option>
+          <option value="Modulo">Modulo</option>
+        </select>
+
+        <label>Fecha</label>
+        <input type="date" id="sale-date" required>
+
+        <div class="row">
+          <div>
+            <label>Total $</label>
+            <input type="number" id="sale-total" placeholder="150000" required>
+          </div>
+          <div>
+            <label>Folio</label>
+            <input type="text" id="sale-folio" placeholder="428879386" required>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">Montos</div>
+
+        <div class="row">
+          <div>
+            <label>Debito $</label>
+            <input type="number" id="sale-debit" placeholder="100000" required>
+          </div>
+          <div>
+            <label>Credito $</label>
+            <input type="number" id="sale-credit" placeholder="30000" required>
+          </div>
+          <div>
+            <label>Efectivo $</label>
+            <input type="number" id="sale-cash" placeholder="20000" required>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">Cantidad de boletas</div>
+
+        <div class="row">
+          <div>
+            <label>Bol. Debito</label>
+            <input type="number" id="sale-boletas-debit" placeholder="11" required>
+          </div>
+          <div>
+            <label>Bol. Credito</label>
+            <input type="number" id="sale-boletas-credit" placeholder="3" required>
+          </div>
+          <div>
+            <label>Bol. Efectivo</label>
+            <input type="number" id="sale-boletas-cash" placeholder="1" required>
+          </div>
+        </div>
+
+        <label>Boleta (foto)</label>
+        <input type="file" id="sale-receipt" accept="image/*" capture="environment" required>
+        <img id="receipt-preview" class="preview">
+
+        <button type="submit" class="btn" id="btn-save">Guardar venta</button>
+      </form>
+    </div>
+    <div id="sale-msg"></div>
+  </div>
+
+  <!-- REPORTE -->
+  <div id="panel-report" class="panel">
+    <div class="card">
+      <label>Mes</label>
+      <input type="month" id="report-month">
+
+      <button class="btn" onclick="loadSales()">Ver ventas</button>
+      <button class="btn btn-outline" onclick="downloadReport()" style="margin-top:8px">Descargar Excel</button>
+    </div>
+
+    <div id="report-msg"></div>
+    <div id="sales-list"></div>
+  </div>
+</div>
+
+<!-- Modal editar -->
+<div class="modal-bg" id="edit-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3>Editar venta</h3>
+    <input type="hidden" id="edit-id">
+    <label>Punto de venta</label>
+    <select id="edit-punto_venta">
+      <option value="Carro Plaza">Carro Plaza</option>
+      <option value="Carro Amarillo">Carro Amarillo</option>
+      <option value="Carro Chico">Carro Chico</option>
+      <option value="Carro Tren">Carro Tren</option>
+      <option value="Modulo">Modulo</option>
+    </select>
+    <label>Fecha</label>
+    <input type="date" id="edit-date">
+    <div class="row">
+      <div><label>Total $</label><input type="number" id="edit-total"></div>
+      <div><label>Folio</label><input type="text" id="edit-folio"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="section-label">Montos</div>
+    <div class="row">
+      <div><label>Debito $</label><input type="number" id="edit-debit"></div>
+      <div><label>Credito $</label><input type="number" id="edit-credit"></div>
+      <div><label>Efectivo $</label><input type="number" id="edit-cash"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="section-label">Cantidad de boletas</div>
+    <div class="row">
+      <div><label>B. Deb</label><input type="number" id="edit-boletas_debit"></div>
+      <div><label>B. Cred</label><input type="number" id="edit-boletas_credit"></div>
+      <div><label>B. Efec</label><input type="number" id="edit-boletas_cash"></div>
+    </div>
+    <div id="edit-msg"></div>
+    <div class="btn-row">
+      <button class="btn btn-sm btn-danger" onclick="deleteSale()">Eliminar</button>
+      <button class="btn btn-sm" onclick="saveSale()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('sale-date').value = today;
+  document.getElementById('report-month').value = today.slice(0, 7);
+
+  document.getElementById('sale-receipt').addEventListener('change', function() {
+    const preview = document.getElementById('receipt-preview');
+    if (this.files && this.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
+      reader.readAsDataURL(this.files[0]);
+    } else { preview.style.display = 'none'; }
+  });
+
+  function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  document.getElementById('sale-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save');
+    const msgEl = document.getElementById('sale-msg');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Guardando...';
+    msgEl.innerHTML = '';
+
+    const fd = new FormData();
+    fd.append('punto_venta', document.getElementById('sale-punto-venta').value);
+    fd.append('date', document.getElementById('sale-date').value);
+    fd.append('total', document.getElementById('sale-total').value);
+    fd.append('debit', document.getElementById('sale-debit').value);
+    fd.append('credit', document.getElementById('sale-credit').value);
+    fd.append('cash', document.getElementById('sale-cash').value);
+    fd.append('boletas_debit', document.getElementById('sale-boletas-debit').value);
+    fd.append('boletas_credit', document.getElementById('sale-boletas-credit').value);
+    fd.append('boletas_cash', document.getElementById('sale-boletas-cash').value);
+    fd.append('folio', document.getElementById('sale-folio').value);
+    fd.append('receipt', document.getElementById('sale-receipt').files[0]);
+
+    try {
+      const res = await fetch('/api/sales', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.ok) {
+        msgEl.innerHTML = '<div class="msg ok">Venta guardada (ID ' + data.id + ')</div>';
+        ['sale-total','sale-debit','sale-credit','sale-cash','sale-boletas-debit','sale-boletas-credit','sale-boletas-cash','sale-folio'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('sale-punto-venta').value = '';
+        document.getElementById('sale-receipt').value = '';
+        document.getElementById('receipt-preview').style.display = 'none';
+      } else {
+        msgEl.innerHTML = '<div class="msg err">' + data.error + '</div>';
+      }
+    } catch(err) {
+      msgEl.innerHTML = '<div class="msg err">Error de conexion</div>';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Guardar venta';
+  });
+
+  async function loadSales() {
+    const month = document.getElementById('report-month').value;
+    const msgEl = document.getElementById('report-msg');
+    const listEl = document.getElementById('sales-list');
+    msgEl.innerHTML = ''; listEl.innerHTML = '';
+
+    if (!month) { msgEl.innerHTML = '<div class="msg err">Selecciona un mes</div>'; return; }
+
+    try {
+      const res = await fetch('/api/sales?month=' + month);
+      const rows = await res.json();
+      if (rows.error) { msgEl.innerHTML = '<div class="msg err">' + rows.error + '</div>'; return; }
+      if (rows.length === 0) { msgEl.innerHTML = '<div class="msg err">Sin ventas en este mes</div>'; return; }
+
+      window._salesData = rows;
+      let totT=0, totD=0, totCr=0, totCa=0, totBD=0, totBC=0, totBCa=0;
+      let html = '<div class="card" style="padding:12px;margin-top:12px"><table class="sales-table"><thead><tr><th>Fecha</th><th>P.Venta</th><th>Total</th><th>Deb</th><th>Cred</th><th>Efec</th><th>B.D</th><th>B.C</th><th>B.E</th><th>Folio</th><th></th></tr></thead><tbody>';
+      rows.forEach((r, i) => {
+        totT += r.total; totD += r.debit; totCr += r.credit; totCa += r.cash;
+        totBD += (r.boletas_debit||0); totBC += (r.boletas_credit||0); totBCa += (r.boletas_cash||0);
+        html += '<tr>'
+          + '<td>' + r.date + '</td>'
+          + '<td>' + (r.punto_venta||'') + '</td>'
+          + '<td>$' + r.total.toLocaleString() + '</td>'
+          + '<td>$' + r.debit.toLocaleString() + '</td>'
+          + '<td>$' + r.credit.toLocaleString() + '</td>'
+          + '<td>$' + r.cash.toLocaleString() + '</td>'
+          + '<td>' + (r.boletas_debit||0) + '</td>'
+          + '<td>' + (r.boletas_credit||0) + '</td>'
+          + '<td>' + (r.boletas_cash||0) + '</td>'
+          + '<td>' + r.folio + '</td>'
+          + '<td><button class="act act-edit" onclick="openEdit('+i+')">editar</button></td>'
+          + '</tr>';
+      });
+      html += '<tr class="total-row"><td>TOTAL</td><td></td>'
+        + '<td>$' + totT.toLocaleString() + '</td>'
+        + '<td>$' + totD.toLocaleString() + '</td>'
+        + '<td>$' + totCr.toLocaleString() + '</td>'
+        + '<td>$' + totCa.toLocaleString() + '</td>'
+        + '<td>' + totBD + '</td>'
+        + '<td>' + totBC + '</td>'
+        + '<td>' + totBCa + '</td>'
+        + '<td></td><td></td></tr>';
+      html += '</tbody></table></div>';
+      listEl.innerHTML = html;
+    } catch(err) {
+      msgEl.innerHTML = '<div class="msg err">Error de conexion</div>';
+    }
+  }
+
+  function downloadReport() {
+    const month = document.getElementById('report-month').value;
+    if (!month) { document.getElementById('report-msg').innerHTML = '<div class="msg err">Selecciona un mes</div>'; return; }
+    window.open('/api/report?month=' + month, '_blank');
+  }
+
+  // --- Edit modal ---
+  function openEdit(idx) {
+    const r = window._salesData[idx];
+    document.getElementById('edit-id').value = r.id;
+    document.getElementById('edit-punto_venta').value = r.punto_venta||'Carro Plaza';
+    document.getElementById('edit-date').value = r.date;
+    document.getElementById('edit-total').value = r.total;
+    document.getElementById('edit-debit').value = r.debit;
+    document.getElementById('edit-credit').value = r.credit;
+    document.getElementById('edit-cash').value = r.cash;
+    document.getElementById('edit-boletas_debit').value = r.boletas_debit||0;
+    document.getElementById('edit-boletas_credit').value = r.boletas_credit||0;
+    document.getElementById('edit-boletas_cash').value = r.boletas_cash||0;
+    document.getElementById('edit-folio').value = r.folio;
+    document.getElementById('edit-msg').innerHTML = '';
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+  }
+
+  async function saveSale() {
+    const id = document.getElementById('edit-id').value;
+    const body = {
+      punto_venta: document.getElementById('edit-punto_venta').value,
+      date: document.getElementById('edit-date').value,
+      total: document.getElementById('edit-total').value,
+      debit: document.getElementById('edit-debit').value,
+      credit: document.getElementById('edit-credit').value,
+      cash: document.getElementById('edit-cash').value,
+      boletas_debit: document.getElementById('edit-boletas_debit').value,
+      boletas_credit: document.getElementById('edit-boletas_credit').value,
+      boletas_cash: document.getElementById('edit-boletas_cash').value,
+      folio: document.getElementById('edit-folio').value,
+    };
+    try {
+      const res = await fetch('/api/sales/' + id, {
+        method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.ok) {
+        closeModal();
+        loadSales();
+        document.getElementById('report-msg').innerHTML = '<div class="msg ok">Venta actualizada</div>';
+      } else {
+        document.getElementById('edit-msg').innerHTML = '<div class="msg err">' + data.error + '</div>';
+      }
+    } catch(e) {
+      document.getElementById('edit-msg').innerHTML = '<div class="msg err">Error de conexion</div>';
+    }
+  }
+
+  async function deleteSale() {
+    const id = document.getElementById('edit-id').value;
+    if (!confirm('Eliminar esta venta?')) return;
+    try {
+      const res = await fetch('/api/sales/' + id, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.ok) {
+        closeModal();
+        loadSales();
+        document.getElementById('report-msg').innerHTML = '<div class="msg ok">Venta eliminada</div>';
+      } else {
+        document.getElementById('edit-msg').innerHTML = '<div class="msg err">' + data.error + '</div>';
+      }
+    } catch(e) {
+      document.getElementById('edit-msg').innerHTML = '<div class="msg err">Error de conexion</div>';
+    }
+  }
+</script>
+</body>
+</html>
